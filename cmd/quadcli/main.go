@@ -49,6 +49,8 @@ func main() {
 	quadrilleService := prepareQuadrilleHttpService()
 	showStartMsg(quadrilleService)
 	history := make([]string, 0)
+	//Below is added to fix an issue with go-prompt library
+	defer handleExit()
 	for {
 		txt := prompt.Input(
 			"> ",
@@ -60,7 +62,7 @@ func main() {
 					Key: prompt.ControlC,
 					Fn: func(buf *prompt.Buffer) {
 						fmt.Println("bye")
-						os.Exit(0)
+						exit(buf)
 					},
 				}))
 		txt = strings.TrimSpace(txt)
