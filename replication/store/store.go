@@ -21,10 +21,10 @@ type OperationType string
 
 const (
 	OperationInsert         OperationType = "insert"
-	OperationDelete                       = "delete"
-	OperationUpdate                       = "update"
-	OperationUpdateLocation               = "updateloc"
-	OperationUpdateData                   = "updatedata"
+	OperationDelete         OperationType = "delete"
+	OperationUpdate         OperationType = "update"
+	OperationUpdateLocation OperationType = "updateloc"
+	OperationUpdateData     OperationType = "updatedata"
 )
 
 const (
