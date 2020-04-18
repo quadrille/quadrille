@@ -62,6 +62,11 @@ func (q quadrilleTCPClient) UpdateData(locationID string, data map[string]interf
 	return
 }
 
+func (q quadrilleTCPClient) BulkWrite(commands []store.Command) (body string, err error) {
+	err = q.store.BulkWrite(commands)
+	return
+}
+
 func (q quadrilleTCPClient) Neighbors(location ds.Position, radius, limit int) (body string, err error) {
 	neighbors := q.store.GetNeighbors(location, radius, limit)
 	neighborsTmp := make([]map[string]interface{}, 0)

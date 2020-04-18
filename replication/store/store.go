@@ -32,11 +32,11 @@ const (
 	raftTimeout         = 10 * time.Second
 )
 
-type command struct {
+type Command struct {
 	Op         string                 `json:"op,omitempty"`
-	LocationID string                 `json:"key,omitempty"`
+	LocationID string                 `json:"location_id,omitempty"`
 	Lat        float64                `json:"lat,omitempty"`
-	Long       float64                `json:"long,omitempty"`
+	Long       float64                `json:"lon,omitempty"`
 	Data       map[string]interface{} `json:"data,omitempty"`
 }
 
@@ -44,10 +44,8 @@ type command struct {
 type Store interface {
 	Open(enableSingle bool, localID string) error
 
-	// Get returns the value for the given key.
 	Get(key string) (ds.QuadTreeLeaf, error)
 
-	// Set sets the value for the given key, via distributed consensus.
 	Insert(locationID string, position ds.GeoLocation, data map[string]interface{}) error
 
 	Update(locationID string, position ds.GeoLocation, data map[string]interface{}) error
@@ -56,8 +54,9 @@ type Store interface {
 
 	UpdateData(locationID string, data map[string]interface{}) error
 
-	// Delete removes the given key, via distributed consensus.
 	Delete(key string) error
+
+	BulkWrite(commands []Command) error
 
 	// Join joins the node, identitifed by nodeID and reachable at addr, to the cluster.
 	Join(nodeID string, addr string) error
@@ -154,16 +153,16 @@ func (s *store) GetNeighbors(position ds.Position, radius, limit int) []ds.QuadT
 // Set sets the data for the given location_id.
 func (s *store) Insert(locationID string, location ds.GeoLocation, data map[string]interface{}) error {
 	if s.raft.State() != raft.Leader {
-		return NonLeaderNodeError
+		return ErrNonLeaderNode
 	}
 	//log.Println("Inside Set")
-	c := &command{
+	c := []Command{Command{
 		Op:         string(OperationInsert),
 		LocationID: locationID,
 		Lat:        location.Lat(),
 		Long:       location.Long(),
 		Data:       data,
-	}
+	}}
 	b, err := json.Marshal(c)
 	if err != nil {
 		return err
@@ -175,16 +174,15 @@ func (s *store) Insert(locationID string, location ds.GeoLocation, data map[stri
 
 func (s *store) Update(locationID string, location ds.GeoLocation, data map[string]interface{}) error {
 	if s.raft.State() != raft.Leader {
-		return NonLeaderNodeError
+		return ErrNonLeaderNode
 	}
-	//log.Println("Inside Set")
-	c := &command{
+	c := []Command{Command{
 		Op:         string(OperationUpdate),
 		LocationID: locationID,
 		Lat:        location.Lat(),
 		Long:       location.Long(),
 		Data:       data,
-	}
+	}}
 	b, err := json.Marshal(c)
 	if err != nil {
 		return err
@@ -196,15 +194,15 @@ func (s *store) Update(locationID string, location ds.GeoLocation, data map[stri
 
 func (s *store) UpdateLocation(locationID string, location ds.GeoLocation) error {
 	if s.raft.State() != raft.Leader {
-		return NonLeaderNodeError
+		return ErrNonLeaderNode
 	}
 	//log.Println("Inside Set")
-	c := &command{
+	c := []Command{Command{
 		Op:         string(OperationUpdateLocation),
 		LocationID: locationID,
 		Lat:        location.Lat(),
 		Long:       location.Long(),
-	}
+	}}
 	b, err := json.Marshal(c)
 	if err != nil {
 		return err
@@ -216,14 +214,14 @@ func (s *store) UpdateLocation(locationID string, location ds.GeoLocation) error
 
 func (s *store) UpdateData(locationID string, data map[string]interface{}) error {
 	if s.raft.State() != raft.Leader {
-		return NonLeaderNodeError
+		return ErrNonLeaderNode
 	}
 	//log.Println("Inside Set")
-	c := &command{
+	c := []Command{Command{
 		Op:         string(OperationUpdateData),
 		LocationID: locationID,
 		Data:       data,
-	}
+	}}
 	b, err := json.Marshal(c)
 	if err != nil {
 		return err
@@ -236,17 +234,30 @@ func (s *store) UpdateData(locationID string, data map[string]interface{}) error
 // Delete deletes the given location.
 func (s *store) Delete(locationID string) error {
 	if s.raft.State() != raft.Leader {
-		return NonLeaderNodeError
+		return ErrNonLeaderNode
 	}
 
 	if _, err := s.q.Get(locationID); err != nil {
-		return NonExistentLocationDeleteError
+		return ErrNonExistentLocationDelete
 	}
-	c := &command{
+	c := []Command{Command{
 		Op:         string(OperationDelete),
 		LocationID: locationID,
-	}
+	}}
 	b, err := json.Marshal(c)
+	if err != nil {
+		return err
+	}
+
+	f := s.raft.Apply(b, raftTimeout)
+	return f.Error()
+}
+
+func (s *store) BulkWrite(commands []Command) error {
+	if s.raft.State() != raft.Leader {
+		return ErrNonLeaderNode
+	}
+	b, err := json.Marshal(commands)
 	if err != nil {
 		return err
 	}
@@ -260,14 +271,14 @@ func (s *store) Delete(locationID string) error {
 func (s *store) Join(nodeID, addr string) error {
 	s.logger.Printf("received join request for remote node %s at %s", nodeID, addr)
 	if s.raft.State() != raft.Leader {
-		return NonLeaderNodeError
+		return ErrNonLeaderNode
 	}
 	isAvailable, err := utils.IsServiceAvailable(addr)
 	if err != nil {
 		return err
 	}
 	if !isAvailable {
-		return AddressNotReachableError
+		return ErrAddressNotReachable
 	}
 	configFuture := s.raft.GetConfiguration()
 	if err := configFuture.Error(); err != nil {
@@ -316,7 +327,7 @@ func (s *store) Remove(id string) error {
 // remove removes the node, with the given shardID, from the cluster.
 func (s *store) remove(id string) error {
 	if s.raft.State() != raft.Leader {
-		return NonLeaderNodeError
+		return ErrNonLeaderNode
 	}
 	future := s.raft.RemoveServer(raft.ServerID(id), 0, 0)
 	if err := future.Error(); err != nil {
@@ -363,10 +374,20 @@ type fsm store
 
 // Apply applies a Raft log entry to the Quadrille store.
 func (f *fsm) Apply(l *raft.Log) interface{} {
-	var c command
-	if err := json.Unmarshal(l.Data, &c); err != nil {
-		panic(fmt.Sprintf("failed to unmarshal command: %s", err.Error()))
+	var commands []Command
+	if err := json.Unmarshal(l.Data, &commands); err != nil {
+		panic(fmt.Sprintf("failed to unmarshal Command: %s", err.Error()))
 	}
+	if len(commands) == 0 {
+		return nil
+	}
+	for _, cmd := range commands {
+		f.executeCmd(cmd)
+	}
+	return nil
+}
+
+func (f *fsm) executeCmd(c Command) interface{} {
 	switch OperationType(c.Op) {
 	case OperationInsert:
 		return f.applyInsert(c.LocationID, *ds.NewPosition(c.Lat, c.Long), c.Data)
@@ -379,9 +400,8 @@ func (f *fsm) Apply(l *raft.Log) interface{} {
 	case OperationUpdateData:
 		return f.applyUpdateData(c.LocationID, c.Data)
 	default:
-		panic(fmt.Sprintf("unrecognized command op: %s", c.Op))
+		panic(fmt.Sprintf("unrecognized Command op: %s", c.Op))
 	}
-	return nil
 }
 
 // Snapshot returns a snapshot of the Quadrille store.
@@ -398,7 +418,7 @@ func (f *fsm) Snapshot() (raft.FSMSnapshot, error) {
 func (f *fsm) Restore(rc io.ReadCloser) error {
 	o := make(map[string]ds.QuadTreeLeaf)
 	if err := json.NewDecoder(rc).Decode(&o); err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return err
 	}
 

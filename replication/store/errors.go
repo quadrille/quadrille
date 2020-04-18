@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	AddressNotReachableError       = errors.New("address not reachable")
-	NonExistentLocationDeleteError = errors.New("cannot delete non existent location")
-	NonLeaderNodeError             = fmt.Errorf("cannot execute operation not leader")
+	ErrAddressNotReachable       = errors.New("address not reachable")
+	ErrNonExistentLocationDelete = errors.New("cannot delete non existent location")
+	ErrNonLeaderNode             = fmt.Errorf("cannot execute operation not leader")
 )

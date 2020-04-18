@@ -152,7 +152,7 @@ func (q *QuadTree) insert(locationID string, location Position, data map[string]
 func (q *QuadTree) Delete(locationID string) error {
 	node := q.locationIndex.Get(locationID)
 	if node == nil {
-		return quadrilleError.NonExistingLocationDeleteAttempt
+		return quadrilleError.ErrNonExistingLocationDeleteAttempt
 	}
 	q.locationIndex.Lock(locationID)
 	defer q.locationIndex.UnLock(locationID)
@@ -160,7 +160,7 @@ func (q *QuadTree) Delete(locationID string) error {
 	defer node.leavesMtx.Unlock()
 	//Checking again as this might have changed due to concurrent code
 	if node = q.locationIndex.GetUnsafe(locationID); node == nil {
-		return quadrilleError.NonExistingLocationDeleteAttempt
+		return quadrilleError.ErrNonExistingLocationDeleteAttempt
 	}
 
 	delete(*node.leaves, locationID)
@@ -171,7 +171,7 @@ func (q *QuadTree) Delete(locationID string) error {
 func (q *QuadTree) UpdateLocation(locationID string, location Position) error {
 	node := q.locationIndex.Get(locationID)
 	if node == nil {
-		return quadrilleError.NonExistingLocationUpdateAttempt
+		return quadrilleError.ErrNonExistingLocationUpdateAttempt
 	}
 	q.locationIndex.Lock(locationID)
 	defer q.locationIndex.UnLock(locationID)
@@ -179,7 +179,7 @@ func (q *QuadTree) UpdateLocation(locationID string, location Position) error {
 	defer node.leavesMtx.Unlock()
 	//Checking again as this might have changed due to concurrent code
 	if node = q.locationIndex.GetUnsafe(locationID); node == nil {
-		return quadrilleError.NonExistingLocationUpdateAttempt
+		return quadrilleError.ErrNonExistingLocationUpdateAttempt
 	}
 	if isWithinBox(node.boundingBox, location) {
 		(*node.leaves)[locationID].Location = location
@@ -195,7 +195,7 @@ func (q *QuadTree) UpdateLocation(locationID string, location Position) error {
 func (q *QuadTree) UpdateData(locationID string, data map[string]interface{}) error {
 	node := q.locationIndex.Get(locationID)
 	if node == nil {
-		return quadrilleError.NonExistingLocationUpdateAttempt
+		return quadrilleError.ErrNonExistingLocationUpdateAttempt
 	}
 	q.locationIndex.Lock(locationID)
 	defer q.locationIndex.UnLock(locationID)
@@ -203,7 +203,7 @@ func (q *QuadTree) UpdateData(locationID string, data map[string]interface{}) er
 	defer node.leavesMtx.Unlock()
 	//Checking again as this might have changed due to concurrent code
 	if node = q.locationIndex.GetUnsafe(locationID); node == nil {
-		return quadrilleError.NonExistingLocationUpdateAttempt
+		return quadrilleError.ErrNonExistingLocationUpdateAttempt
 	}
 	(*node.leaves)[locationID].Data = data
 	return nil
@@ -217,7 +217,7 @@ func (q *QuadTree) Update(locationID string, location Position, data map[string]
 func (q *QuadTree) update(locationID string, location Position, data map[string]interface{}) (*QuadTreeNode, error) {
 	node := q.locationIndex.Get(locationID)
 	if node == nil {
-		return nil, quadrilleError.NonExistingLocationUpdateAttempt
+		return nil, quadrilleError.ErrNonExistingLocationUpdateAttempt
 	}
 	q.locationIndex.Lock(locationID)
 	defer q.locationIndex.UnLock(locationID)
@@ -225,7 +225,7 @@ func (q *QuadTree) update(locationID string, location Position, data map[string]
 	defer node.leavesMtx.Unlock()
 	//Checking again as this might have changed due to concurrent code
 	if node = q.locationIndex.GetUnsafe(locationID); node == nil {
-		return nil, quadrilleError.NonExistingLocationUpdateAttempt
+		return nil, quadrilleError.ErrNonExistingLocationUpdateAttempt
 	}
 	updatedNode := node
 	if isWithinBox(node.boundingBox, location) {
@@ -241,7 +241,7 @@ func (q *QuadTree) update(locationID string, location Position, data map[string]
 
 func (q *QuadTree) Get(locationID string) (QuadTreeLeaf, error) {
 	if node := q.locationIndex.Get(locationID); node == nil {
-		return QuadTreeLeaf{}, quadrilleError.LocationNotFound
+		return QuadTreeLeaf{}, quadrilleError.ErrLocationNotFound
 	}
 	node := q.locationIndex.Get(locationID)
 	node.leavesMtx.RLock()

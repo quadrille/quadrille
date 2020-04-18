@@ -31,8 +31,8 @@ func TestQuadTree_Get(t *testing.T) {
 	if err == nil {
 		t.Fatalf("Get(loc00001) expecting error but got nil")
 	}
-	if !reflect.DeepEqual(err, errors.LocationNotFound) {
-		t.Fatalf("Expecting LocationNotFound but got other error")
+	if !reflect.DeepEqual(err, errors.ErrLocationNotFound) {
+		t.Fatalf("Expecting ErrLocationNotFound but got other error")
 	}
 }
 
@@ -51,7 +51,7 @@ func TestQuadTree_Delete(t *testing.T) {
 	}
 
 	err = q.Delete("loc123")
-	if !reflect.DeepEqual(err, errors.NonExistingLocationDeleteAttempt) {
-		t.Fatalf("Expected LocationNotFound, got %v", err)
+	if !reflect.DeepEqual(err, errors.ErrNonExistingLocationDeleteAttempt) {
+		t.Fatalf("Expected ErrLocationNotFound, got %v", err)
 	}
 }

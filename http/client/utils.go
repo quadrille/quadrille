@@ -3,6 +3,7 @@ package client
 import (
 	"encoding/json"
 	"github.com/quadrille/quadrille/core/ds"
+	"github.com/quadrille/quadrille/replication/store"
 	"strconv"
 	"strings"
 )
@@ -34,5 +35,10 @@ func prepareDataFromStr(cmdParts []string, expectedPosition int) (data map[strin
 		return make(map[string]interface{})
 	}
 	json.Unmarshal([]byte(cmdParts[expectedPosition]), &data)
+	return
+}
+
+func prepareBulkWriteOpsFromStr(bulkWriteStr string) (bulkWriteOps []store.Command) {
+	json.Unmarshal([]byte(bulkWriteStr), &bulkWriteOps)
 	return
 }

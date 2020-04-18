@@ -22,7 +22,7 @@ func (q QuadrilleMockService) GetLocation(locationID string) (body string, err e
 }
 
 func (q QuadrilleMockService) DeleteLocation(locationID string) (body string, err error) {
-	return "", store.NonExistentLocationDeleteError
+	return "", store.ErrNonExistentLocationDelete
 }
 
 func (q QuadrilleMockService) Insert(locationID string, location ds.Position, data map[string]interface{}) (body string, err error) {
@@ -62,6 +62,10 @@ func (q QuadrilleMockService) AddNode(nodeID, addr string) (body string, err err
 }
 
 func (q QuadrilleMockService) RemoveNode(nodeID string) (body string, err error) {
+	return "", nil
+}
+
+func (q QuadrilleMockService) BulkWrite(commands []store.Command) (body string, err error) {
 	return "", nil
 }
 

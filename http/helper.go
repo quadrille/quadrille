@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/quadrille/quadrille/core/ds"
+	"github.com/quadrille/quadrille/replication/store"
 	"net/http"
 	"strings"
 )
@@ -11,7 +12,7 @@ import (
 func prepareUpdateArgs(r *http.Request) (latExists, lonExists, dataExists bool, locationID string, position *ds.Position, data map[string]interface{}, err error) {
 	var leaf map[string]interface{}
 	if err = json.NewDecoder(r.Body).Decode(&leaf); err != nil {
-		err = InvalidBodyErr
+		err = ErrInvalidBody
 		return
 	}
 	locationID, err = getLocationID(r)
@@ -42,7 +43,7 @@ func prepareUpdateArgs(r *http.Request) (latExists, lonExists, dataExists bool, 
 		if ok {
 			data = dataTmp
 		} else {
-			err = InvalidDataErr
+			err = ErrInvalidData
 			return
 		}
 	}
@@ -52,7 +53,7 @@ func prepareUpdateArgs(r *http.Request) (latExists, lonExists, dataExists bool, 
 func prepareInsertArgs(r *http.Request) (locationID string, position *ds.Position, data map[string]interface{}, err error) {
 	var leaf map[string]interface{}
 	if err = json.NewDecoder(r.Body).Decode(&leaf); err != nil {
-		err = InvalidBodyErr
+		err = ErrInvalidBody
 		return
 	}
 	locationID, err = getLocationID(r)
@@ -68,7 +69,7 @@ func prepareInsertArgs(r *http.Request) (locationID string, position *ds.Positio
 		if ok {
 			data = dataTmp
 		} else {
-			err = InvalidDataErr
+			err = ErrInvalidData
 			return
 		}
 	}
@@ -97,10 +98,18 @@ func prepareGetNeighborsArg(r *http.Request) (lat, lon float64, radius, limit in
 	return
 }
 
+func prepareBulkWriteCommands(r *http.Request) (commands []store.Command, err error) {
+	if err = json.NewDecoder(r.Body).Decode(&commands); err != nil {
+		err = ErrInvalidBulkWriteArray
+		return
+	}
+	return
+}
+
 func prepareJoinArgs(r *http.Request) (nodeID, remoteAddr string, err error) {
 	m := map[string]string{}
 	if err = json.NewDecoder(r.Body).Decode(&m); err != nil {
-		err = InvalidBodyErr
+		err = ErrInvalidBody
 		return
 	}
 
@@ -110,7 +119,7 @@ func prepareJoinArgs(r *http.Request) (nodeID, remoteAddr string, err error) {
 		return
 	}
 	nodeID = nodeIDTmp
-	
+
 	remoteAddr, ok = m["addr"]
 	if !ok {
 		err = errors.New("missing addr")

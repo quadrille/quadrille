@@ -89,6 +89,8 @@ func (s *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.getMembers(w, r)
 	} else if r.URL.Path == "/isleader" {
 		s.isLeader(w, r)
+	} else if r.URL.Path == "/bulk" {
+		s.handleBulkWrite(w, r)
 	} else {
 		w.WriteHeader(http.StatusNotFound)
 	}
@@ -231,6 +233,16 @@ func (s *Service) getNeighbors(w http.ResponseWriter, r *http.Request) {
 	resp := string(neighborsStr)
 	setContentTypeJSON(w)
 	io.WriteString(w, resp)
+}
+
+func (s *Service) handleBulkWrite(w http.ResponseWriter, r *http.Request) {
+	commands, err := prepareBulkWriteCommands(r)
+	if err != nil {
+		respondWithErr(w, err)
+		return
+	}
+	s.store.BulkWrite(commands)
+	io.WriteString(w, "ok")
 }
 
 // Addr returns the address on which the Service is listening

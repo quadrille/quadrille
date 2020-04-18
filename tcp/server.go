@@ -6,6 +6,8 @@ import (
 	"github.com/quadrille/quadrille/http/client"
 	"github.com/quadrille/quadrille/opt"
 	"github.com/quadrille/quadrille/replication/store"
+	"io"
+	"log"
 	"net"
 	"os"
 	"strings"
@@ -39,7 +41,7 @@ func (srv *service) Start() error {
 		for {
 			c, err := ln.Accept()
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 				os.Exit(100)
 			}
 			go handleConnection(c, quadrilleTCPService)
@@ -52,7 +54,11 @@ func handleConnection(c net.Conn, service opt.QuadrilleService) {
 	for {
 		netData, err := bufio.NewReader(c).ReadString('\n')
 		if err != nil {
-			fmt.Println("handleConnection", err)
+			if err == io.EOF {
+				log.Printf("Connection from %s closed\n", c.RemoteAddr())
+			} else {
+				log.Println("Error reading from connection", err)
+			}
 			break
 		}
 		//fmt.Println(netData)
