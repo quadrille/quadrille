@@ -31,6 +31,8 @@ func executeCmd(cmdParts []string, service opt.QuadrilleService) (respBody strin
 		return service.IsLeader()
 	case opt.ReplicaSetMembers:
 		return service.Members()
+	case opt.BulkWrite:
+		return service.BulkWrite(prepareBulkWriteOpsFromStr(cmdParts[1]))
 	default:
 		return "", UnrecognizedCommandError
 	}

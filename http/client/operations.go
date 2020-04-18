@@ -2,10 +2,12 @@ package client
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/quadrille/quadrille/core/ds"
 	"github.com/quadrille/quadrille/http/types"
 	"github.com/quadrille/quadrille/opt"
+	"github.com/quadrille/quadrille/replication/store"
 	"math"
 	"strconv"
 	"strings"
@@ -63,6 +65,10 @@ func (q quadrilleHTTPClient) UpdateData(locationID string, data map[string]inter
 	}
 	body, _, err = Put(q.host + "/location/" + locationID).SetPayload(string(payload)).SetTimeout(5000).Do()
 	return
+}
+
+func (q quadrilleHTTPClient) BulkWrite(commands []store.Command) (body string, err error) {
+	return "", errors.New("operation not supported by client")
 }
 
 func (q quadrilleHTTPClient) Neighbors(location ds.Position, radius, limit int) (body string, err error) {

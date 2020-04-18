@@ -78,7 +78,7 @@ func main() {
 }
 
 func printStartMessages(logo, dataDir string) {
-	log.Println(logo)
+	fmt.Println(logo)
 	log.Println("Quadrille started successfully")
 	log.Printf("Data Dir: %s\n", dataDir)
 }
@@ -98,7 +98,7 @@ func startTCPListener(tcpAddr string, s store.Store) {
 }
 
 func startHTTPListener(httpAddr string, s store.Store) {
-	fmt.Printf("Starting http service at %s\n", httpAddr)
+	log.Printf("Starting http service at %s\n", httpAddr)
 	//Start HTTP listener
 	h := httpd.New(httpAddr, s)
 	if err := h.Start(); err != nil {

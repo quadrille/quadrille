@@ -2,6 +2,7 @@ package opt
 
 import (
 	"github.com/quadrille/quadrille/core/ds"
+	"github.com/quadrille/quadrille/replication/store"
 )
 
 type OperationType string
@@ -19,6 +20,7 @@ const (
 	Join              = "join"
 	Remove            = "removenode"
 	Neighbors         = "neighbors"
+	BulkWrite         = "bulkwrite"
 )
 
 type QuadrilleService interface {
@@ -34,4 +36,5 @@ type QuadrilleService interface {
 	Members() (body string, err error)
 	AddNode(nodeID, addr string) (body string, err error)
 	RemoveNode(nodeID string) (body string, err error)
+	BulkWrite(commands []store.Command) (body string, err error)
 }
