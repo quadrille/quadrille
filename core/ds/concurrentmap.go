@@ -4,6 +4,7 @@ import (
 	"stathat.com/c/consistent"
 	"strconv"
 	"sync"
+	"fmt"
 )
 
 type specialMap struct {
