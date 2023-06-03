@@ -4,6 +4,7 @@ import (
 	"stathat.com/c/consistent"
 	"strconv"
 	"sync"
+	"fmt"
 )
 
 type specialMap struct {
@@ -78,7 +79,7 @@ func NewMap() *concurrentMap {
 		hash: consistent.New(),
 	}
 	for i := 0; i < mapConcurrency; i++ {
-		m.hash.Add(string(i))
+		m.hash.Add(fmt.Sprint(i))
 		m.maps[i] = specialMap{m: map[string]*QuadTreeNode{}}
 	}
 	return &m
