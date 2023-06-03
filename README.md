@@ -1,4 +1,4 @@
-<img src="https://static.quadrille.io/quadrille-logo.png" height=100></img>
+<img src="https://quadrille.io/img/quadrille_600x315.png" height=100></img>
 
 ###### The lightweight, distributed, high-performance geospatial database
 
